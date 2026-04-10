@@ -71,3 +71,75 @@ try {
 } catch (error) {
   console.error(`Transaction Failed: ${error.message}`);
 }
+// ---------------------------------------------------------------------------------------
+/**
+ * ATM Logic Module
+ * Following Functional Programming principles: 
+ * - Pure logic where possible
+ * - Clear error boundaries
+ */
+
+/**
+ * Creates a new transaction log entry
+ * @param {string} type - DEPOSIT or WITHDRAW
+ * @param {number} amount 
+ * @param {number} balance 
+ */
+const createLog = (type, amount, balance) => ({
+  type,
+  amount,
+  balanceAfter: balance,
+  timestamp: new Date().toISOString(),
+});
+
+/**
+ * Core ATM Functionality
+ * Using a closure to maintain private state
+ */
+export const createATM = (initialBalance = 0) => {
+  let balance = initialBalance;
+  let history = [];
+
+  return {
+    // 1. Get current status
+    getDetails: () => ({
+      balance,
+      history: [...history], // Return a copy to prevent external mutation
+    }),
+
+    // 2. Deposit Logic
+    deposit: (amount) => {
+      if (typeof amount !== 'number' || amount <= 0) {
+        throw new Error("Invalid deposit amount: Must be a positive number.");
+      }
+
+      balance += amount;
+      const log = createLog('DEPOSIT', amount, balance);
+      history.push(log);
+
+      return { message: "Deposit successful", newBalance: balance };
+    },
+
+    // 3. Withdrawal Logic
+    withdraw: (amount) => {
+      if (typeof amount !== 'number' || amount <= 0) {
+        throw new Error("Invalid withdrawal amount.");
+      }
+      
+      if (amount > balance) {
+        throw new Error("Insufficient funds for this transaction.");
+      }
+
+      balance -= amount;
+      const log = createLog('WITHDRAWAL', amount, balance);
+      history.push(log);
+
+      return { message: "Withdrawal successful", newBalance: balance };
+    },
+  };
+};
+
+// --- Quick Test Execution ---
+// const myAccount = createATM(500);
+// console.log(myAccount.deposit(200));
+// console.log(myAccount.getDetails());
